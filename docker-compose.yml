@@ -1,0 +1,24 @@
+version: '3.1'
+
+services:
+  db:
+    image: mysql:8.0.36
+    container_name: easy2_easy3_db
+    environment:
+      MYSQL_ROOT_PASSWORD: Toshiba_25
+      MYSQL_DATABASE: easy2-easy3-api
+    ports:
+      - "3068:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: easy2_easy3_pma
+    environment:
+      PMA_HOST: easy2_easy3_db
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 8082:80
+volumes:
+  dbdata:
