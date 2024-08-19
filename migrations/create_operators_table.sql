@@ -1,5 +1,0 @@
-CREATE TABLE IF NOT EXISTS operators (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    operator_name VARCHAR(36) NOT NULL,
-    api_key VARCHAR(50) NOT NULL
-);
