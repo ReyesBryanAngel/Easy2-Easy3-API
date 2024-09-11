@@ -1,7 +1,9 @@
 
-# Number Games
+# GTSI - BE - Color Game
 
-Number Games API is a PHP-based system designed to manage the logic and data handling for an interactive number guessing game. This backend is responsible for facilitating communication between the game client and the server, processing user inputs, generating game challenges, maintaining game state, and managing user transactions.
+The Color Game Backend is a PHP-based system designed to manage the logic and data handling for an interactive color guessing game. This backend is responsible for facilitating communication between the game client and the server, processing user inputs, generating game challenges, maintaining game state, and managing user scores.
+
+
 
 ## Technologies Used:
 
@@ -12,10 +14,49 @@ A relational database management system (RDBMS) like MySQL is utilized for stori
 ### RESTful API: 
 The backend follows REST principles to design its API, providing a standardized and intuitive interface for communication between the client and server.
 Conclusion:
-### Docker
-Docker is used for containerization to package the application and its dependencies. This ensures the application runs the same way in local and production environment.
-### PHPUnit
-This API uses PHPUnit for unit testing of individual components. It ensures each part of the application works correctly as intended.
-### Phinx
-Although this is a native PHP, we utilize the phinx library to automate the migration of schema from dev environment to the database.
+
+The Color Game Backend implemented in PHP provides a robust infrastructure for creating an engaging and interactive color guessing game. By handling user authentication, game logic, scoring, and data management, it ensures a seamless gaming experience while prioritizing security and scalability.
+
+
+
+
+## Contributing
+
+Contributions are always welcome!
+
+See `contributing.md` for ways to get started.
+
+Please adhere to this project's `code of conduct`.
+
+
+## Authors
+
+- [@austineraye](https://www.github.com/austineraye)
+
+
+## API Reference
+
+#### Get all items
+
+```http
+  GET /api/items
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `game_api_key` | `string` | **Required**. Your API key |
+
+#### Get item
+
+```http
+  GET /api/items/${id}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `id`      | `string` | **Required**. Id of item to fetch |
+
+#### add(num1, num2)
+
+Takes two numbers and returns the sum.
 

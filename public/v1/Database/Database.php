@@ -22,6 +22,7 @@ class Database {
         $this->username = $_ENV['DB_USERNAME'];
         $this->password = $_ENV['DB_PASSWORD'];
         $this->database = $_ENV['DB_DATABASE'];
+        date_default_timezone_set('Asia/Manila');
         
         try {
             $this->conn = new PDO(

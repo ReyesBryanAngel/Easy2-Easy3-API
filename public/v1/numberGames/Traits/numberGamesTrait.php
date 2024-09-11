@@ -37,11 +37,12 @@ trait numberGamesTrait {
             operators.straight_win_rate, 
             operators.rambolito_win_rate,
             operators.bet_minlimit,
-            operators.bet_maxlimit
+            operators.bet_maxlimit,
+            operators.company_name
         FROM 
             game_session 
         LEFT JOIN 
-            (SELECT operator_id, straight_win_rate, rambolito_win_rate, bet_minlimit, bet_maxlimit FROM operators) AS operators ON 
+            (SELECT company_name, operator_id, straight_win_rate, rambolito_win_rate, bet_minlimit, bet_maxlimit FROM operators) AS operators ON 
             game_session.operator_id = operators.operator_id WHERE
             game_session.player_id = :playerId
         "; 
@@ -206,10 +207,28 @@ trait numberGamesTrait {
         exit;
     }
     
-    public function snakeToCamelCase($str)
+    private function snakeToCamelCase($str)
     {
         return lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $str))));
     }
+
+    public function snakeCaseConverter($queryResults)
+     {
+        $formattedResults = [];
+        foreach ($queryResults as $result) {
+            $formattedResult = [];
+            foreach ($result as $key => $value) {
+                if ($key === 'bet') {
+                    $formattedResult['selectedNumbers'] = $value;
+                } else {
+                    $formattedResult[$this->snakeToCamelCase($key)] = $value;
+                }
+            }
+            $formattedResults[] = $formattedResult;
+        }
+
+        return $formattedResults;
+     }
 
     public function queryEvents($payload, $oauth)
     {
@@ -220,16 +239,7 @@ trait numberGamesTrait {
         $statement->execute();
         $results = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-        
-        $formattedResults = [];
-        foreach ($results as $result) {
-            $formattedResult = [];
-            foreach ($result as $key => $value) {
-                $formattedResult[$oauth->snakeToCamelCase($key)] = $value;
-            }
-            $formattedResults[] = $formattedResult;
-        }
 
-        return $formattedResults;
+        return $this->snakeCaseConverter($results);
     }
 }

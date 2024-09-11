@@ -35,7 +35,7 @@ class SessionController {
         $referenceId = strtoupper($this->oauth->generateUniqueReferenceId(8));
         $signature = md5($operator['operator_id'].$payload['playerId']);
         $gameSession = $this->oauth->queryGameSession($payload['playerId']);
-        $isBalanceWithdrawn = $gameSession['balance_withdrawn'];
+        $isBalanceWithdrawn = $gameSession['balance_withdrawn'] ?? null;
 
         $payloadToEncrypt = array(
             "operatorId" => $payload['operatorId'],
@@ -75,7 +75,15 @@ class SessionController {
                     $isBalanceWithdrawn
                 );
             } else {
-                if (date('Y-m-d H:i:s') > $gameSession['expiration_date'] || $gameSession['expiration_date'] === null || $gameSession['balance_withdrawn']) {
+                $transactions = $this->oauth->getTransactions($gameSession['player_id']);
+                $transactionStatusId = $transactions[0]['transaction_status_id'] ?? null;
+
+                if (
+                    date('Y-m-d H:i:s') > $gameSession['expiration_date'] || 
+                    $gameSession['expiration_date'] === null || 
+                    $gameSession['balance_withdrawn'] ||
+                    $transactionStatusId != 1
+                    ) {
                     $this->oauth->insertTransactions(
                         $operator['operator_id'], 
                         $payload['playerId'], 

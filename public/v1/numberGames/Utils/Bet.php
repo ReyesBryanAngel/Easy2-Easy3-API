@@ -143,22 +143,36 @@ class Bet {
 
     }
 
-    function luckPickGenerator2()
+    public function luckPickGenerator2($winTypeId)
     {
         $firstNumber = rand(1, 38);
         $secondNumber = rand(1, 38);
-    
+
+        if ($winTypeId == 5) {
+            while ($secondNumber == $firstNumber) {
+                $secondNumber = rand(1, 38);
+            }
+        }
+
         return "$firstNumber-$secondNumber";
     }
     
 
-    function luckPickGenerator3()
+    public function luckPickGenerator3($winTypeId)
     {
         $firstDigit = rand(1, 9);
         $secondDigit = rand(1, 9);
         $thirdDigit = rand(1, 9);
-    
+
+        if ($winTypeId == 5) {
+            while ($secondDigit == $firstDigit) {
+                $secondDigit = rand(1, 9);
+            }
+            while ($thirdDigit == $firstDigit || $thirdDigit == $secondDigit) {
+                $thirdDigit = rand(1, 9);
+            }
+        }
+
         return "$firstDigit-$secondDigit-$thirdDigit";
     }
-    
 }

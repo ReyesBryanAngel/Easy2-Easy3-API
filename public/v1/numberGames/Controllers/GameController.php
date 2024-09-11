@@ -110,7 +110,6 @@ class GameController {
         ];
         $errors = $this->numberGamesRequest->validateGetBoards($payloadToValidate);
         $boardsOfCurrentEvent = $this->getBoardsModel->queryOpenBoards($payload['eventId'], $payload['gameId']);
-        // $this->getBoardsModel->dd($boardsOfCurrentEvent);
         $this->getBoardsModel->queryEvent($payload['eventId']);
         $playerCountPerBoard = $this->getBoardsModel->countPlayerWhoJoinedTheBoard($boardsOfCurrentEvent, $payload['playerId'], $isLeftTheBoard);
         $boardWithPlayerCounts = $this->getBoardsModel->mergePlayerCountToBoardInfo($boardsOfCurrentEvent, $playerCountPerBoard);
@@ -353,14 +352,7 @@ class GameController {
     {
         $isJwtValid = $this->jwt->verifyToken($this->jwt->getBearerToken());
         $payload = json_decode(file_get_contents('php://input'), true);
-        $errors = $this->numberGamesRequest->validateBets($payload);
-        if(!empty($errors)) {
-            return $this->betModel->jsonResponse([
-                'code' => 422,
-                'status' => 'failed',
-                'message' => $errors
-            ], 422);
-        }
+
         $playerIdFromToken = $isJwtValid->playerId ?? null;
         $luckyPick = $payload['luckyPick'] ? 1 : 0;
         $referenceId = strtoupper($this->betModel->generateUniqueReferenceId(8));
@@ -372,11 +364,19 @@ class GameController {
                 'message' => 'Player id does not exist.',
             ], 400); 
         }
+        $errors = $this->numberGamesRequest->validateBets($payload, $gameSession['game_id']);
+        if(!empty($errors)) {
+            return $this->betModel->jsonResponse([
+                'code' => 422,
+                'status' => 'failed',
+                'message' => $errors
+            ], 422);
+        }
         $operatorOfPlayer = $this->betModel->tracePlayerOperator($payload['playerId']);
         $signature = md5($operatorOfPlayer['operator_id'].$payload['playerId']);
         $gameType = $gameSession['game_id'] === 2 ? 'EASY2' : 'EASY3';
         $currentRound = $this->betModel->queryCurrentRound($gameSession['game_id'], $gameSession['event_id'], $gameSession['board_id']);
-        $luckyPickGenerator = $gameType === 'EASY2' ? $this->betModel->luckPickGenerator2() : $this->betModel->luckPickGenerator3();
+        $luckyPickGenerator = $gameType === 'EASY2' ? $this->betModel->luckPickGenerator2($payload['winTypeId']) : $this->betModel->luckPickGenerator3($payload['winTypeId']);
         $selectedNumbers = $luckyPick == true ? $luckyPickGenerator : $payload['selectedNumbers'] ?? null;
         $transactions = $this->betModel->getTransactions($payload['playerId']);
         $previousBalance = $transactions[0]['current_bal'] ?? null;

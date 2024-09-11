@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints\Type;
 use Symfony\Component\Validator\Constraints\Positive;
 
 class numberGamesRequest {
-    function validateSession($payload) {
+    public function validateSession($payload) {
         $validator = Validation::createValidator();
     
         $constraints = new Collection([
@@ -24,7 +24,7 @@ class numberGamesRequest {
         return $this->validatePayload($validator, $payload, $constraints);
     }
     
-    function validateBets($payload) {
+    public function validateBets($payload, $gameId) {
         $validator = Validation::createValidator();
     
         $constraints = new Collection([
@@ -39,31 +39,22 @@ class numberGamesRequest {
         ]);
     
         $errors = $this->validatePayload($validator, $payload, $constraints);
-        $selectedNumbers = $payload['selectedNumbers'] ?? '';
-        $luckyPick = $payload['luckyPick'] ?? null;
     
-        if (isset($payload['luckyPick'])) {
-            if (!$payload['luckyPick'] && empty($selectedNumbers)) {
-                $errors['selectedNumbers'] = 'selectedNumbers is required when luckyPick is switch off.';
-            } elseif ($payload['luckyPick'] && isset($payload['selectedNumbers'])) {
-                $errors['selectedNumbers'] = 'selectedNumbers should not be present when luckyPick is true.';
-            } else if (!preg_match('/^\d{1,2}-\d{1,2}$/', $selectedNumbers) && !$luckyPick) {
-                $errors['selectedNumbers'] = 'selectedNumbers must be in numbers and in the format of "XX-YY".';
-            }
+        if (in_array($gameId, [2, 3])) {
+            $this->validateSelectedNumbers(
+                $gameId, 
+                $payload['luckyPick'] ?? null, 
+                $payload['selectedNumbers'] ?? null, 
+                $payload['winTypeId'] ?? null,
+                $errors
+            );
         }
     
-        if (isset($payload['selectedNumbers'])) {
-            list($firstNumber, $secondNumber) = explode('-', $selectedNumbers);
-            if ($firstNumber > 38 || $secondNumber > 38) {
-                $errors['selectedNumbers'] = 'selectedNumbers should not be greater than 38.';
-            }
-        }
-       
-    
+        
         return $errors;
     }
     
-    function validateChooseBoard($payload) {
+    public function validateChooseBoard($payload) {
         $validator = Validation::createValidator();
     
         $constraints = new Collection([
@@ -77,7 +68,7 @@ class numberGamesRequest {
         return $this->validatePayload($validator, $payload, $constraints);
     }
     
-    function validateDeposit($payload) {
+    public function validateDeposit($payload) {
         $validator = Validation::createValidator();
     
         $constraints = new Collection([
@@ -91,7 +82,7 @@ class numberGamesRequest {
         return $this->validatePayload($validator, $payload, $constraints);
     }
     
-    function validateWithdraw($payload) {
+    public function validateWithdraw($payload) {
         $validator = Validation::createValidator();
     
         $constraints = new Collection([
@@ -104,7 +95,7 @@ class numberGamesRequest {
         return $this->validatePayload($validator, $payload, $constraints);
     }
     
-    function validateGetBoards($payload) {
+    public function validateGetBoards($payload) {
         $validator = Validation::createValidator();
     
         $constraints = new Collection([
@@ -118,7 +109,22 @@ class numberGamesRequest {
         return $this->validatePayload($validator, $payload, $constraints);
     }
     
-    function validatePlayerId($payload) {
+    public function validatePlayerAndBoard($payload) {
+        $validator = Validation::createValidator();
+    
+        $constraints = new Collection([
+            'fields' => [
+                'gameId' => [new NotBlank(), new Type('integer')],
+                'eventId' => [new NotBlank(), new Type('integer')],
+                'boardId' => [new NotBlank(), new Type('integer')],
+                'playerId' => [new NotBlank(), new Type('string')],
+            ]
+        ]);
+    
+        return $this->validatePayload($validator, $payload, $constraints);
+    }
+    
+    public function validatePlayerId($payload) {
         $validator = Validation::createValidator();
     
         $constraints = new Collection([
@@ -130,7 +136,7 @@ class numberGamesRequest {
         return $this->validatePayload($validator, $payload, $constraints);
     }
     
-    function validatePlayerIdAndGameId($payload) {
+    public function validatePlayerIdAndGameId($payload) {
         $validator = Validation::createValidator();
     
         $constraints = new Collection([
@@ -143,7 +149,21 @@ class numberGamesRequest {
         return $this->validatePayload($validator, $payload, $constraints);
     }
     
-    function validatePayload($validator, $payload, $constraints) {
+    public function validateCurrentBoard($payload) {
+        $validator = Validation::createValidator();
+    
+        $constraints = new Collection([
+            'fields' => [
+                'gameId' => [new NotBlank(), new Type('integer')],
+                'boardId' => [new NotBlank(), new Type('integer')],
+                'playerId' => [new NotBlank(), new Type('string')],
+            ]
+        ]);
+    
+        return $this->validatePayload($validator, $payload, $constraints);
+    }
+    
+    private function validatePayload($validator, $payload, $constraints) {
         $violations = $validator->validate($payload, $constraints);
         $errors = [];
     
@@ -156,4 +176,54 @@ class numberGamesRequest {
         return $errors;
     }
     
+    private function validateSelectedNumbers($gameId, $luckyPick, $selectedNumbers, $winTypeId, &$errors) {
+        
+        $formats = [
+            2 => '/^\d{1,2}-\d{1,2}$/',
+            3 => '/^\d-\d-\d$/'
+        ];
+        
+        $maxValues = [
+            2 => 38,
+            3 => 9
+        ];
+        
+        if (!$luckyPick && empty($selectedNumbers)) {
+            $errors['selectedNumbers'] = 'selectedNumbers is required when luckyPick is switched off.';
+        } elseif ($luckyPick && isset($selectedNumbers)) {
+            $errors['selectedNumbers'] = 'selectedNumbers should not be present when luckyPick is on.';
+        } elseif (isset($selectedNumbers)) {
+            $this->extendedValidationForBet($selectedNumbers, $formats[$gameId], $maxValues[$gameId], $errors);
+            $this->validateRambolito($selectedNumbers, $winTypeId, $gameId, $errors);
+        }
+    }
+
+    private function extendedValidationForBet($selectedNumbers, $format, $maxValue, &$errors)
+    {
+        if (!preg_match($format, $selectedNumbers)) {
+            $errors['selectedNumbers'] = 'selectedNumbers must be in numbers and in the correct format.';
+            return;
+        }
+
+        $numbers = explode('-', $selectedNumbers);
+        foreach ($numbers as $number) {
+            if ($number > $maxValue) {
+                $errors['selectedNumbers'] = "Each number should not be greater than $maxValue.";
+                return;
+            }
+        }
+    }
+
+    private function validateRambolito($selectedNumbers, $winTypeId, $gameId, &$errors)
+    {
+        $numbers = explode('-', $selectedNumbers);
+
+        if ($winTypeId == 5) {
+            if ($gameId == 2 && $numbers[0] == $numbers[1]) {
+                $errors['selectedNumbers'] = 'Pair of numbers are not allowed to be equal when playing rambolito.';
+            } elseif ($gameId == 3 && $numbers[0] == $numbers[1] && $numbers[1] == $numbers[2]) {
+                $errors['selectedNumbers'] = 'Pair of numbers are not allowed to be equal when playing rambolito.';
+            }
+        }
+    }
 }

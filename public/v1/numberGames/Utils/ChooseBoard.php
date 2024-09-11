@@ -22,11 +22,11 @@ class ChooseBoard {
         $statement->execute();
         $result = $statement->fetch(PDO::FETCH_ASSOC);
 
-        if (!$result) {
+        if (!$result || $result['board_status'] == 'close') {
             return $this->jsonResponse([
                 'code' => 400,
                 'status' => 'failed',
-                'message' => 'Board is either does not exist or closed.',
+                'message' => 'Board is either closed or does not exist.',
             ], 400); 
         }
 

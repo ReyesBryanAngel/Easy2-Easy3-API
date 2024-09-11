@@ -48,8 +48,7 @@ class Oauth {
         $stmt->execute();
         $rows = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        $cgExpirationTime = time() + (10 * 60);
-        $expirationDate = date('Y-m-d H:i:s', $cgExpirationTime);
+        $expirationDate = date('Y-m-d H:i:s', strtotime('+15 minutes'));
 
         if ($rows != false) {
             $sqlUpdateExpiration = "UPDATE game_session SET

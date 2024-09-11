@@ -36,21 +36,8 @@ class PlayerCurrentBets {
         $statement->bindParam(':boardId', $boardId);
         $statement->bindParam(':round_count', $currentRound);
         $statement->execute();
-
         $results = $statement->fetchAll(PDO::FETCH_ASSOC);
-        $formattedResults = [];
-        foreach ($results as $result) {
-            $formattedResult = [];
-            foreach ($result as $key => $value) {
-                if ($key === 'bet') {
-                    $formattedResult['selectedNumbers'] = $value;
-                } else {
-                    $formattedResult[$this->snakeToCamelCase($key)] = $value;
-                }
-            }
-            $formattedResults[] = $formattedResult;
-        }
-
-        return $formattedResults;
+        
+        return $this->snakeCaseConverter($results);
     }
 }
