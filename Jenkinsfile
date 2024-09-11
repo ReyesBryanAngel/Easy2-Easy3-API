@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'Built-In Node' // This label should match your Jenkins agent's label
+        label 'master' // This label should match your Jenkins agent's label
     }
 
     environment {
