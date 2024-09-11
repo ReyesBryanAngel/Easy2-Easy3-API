@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'master' // This label should match your Jenkins agent's label
+        label 'number-games' // This label should match your Jenkins agent's label
     }
 
     environment {
